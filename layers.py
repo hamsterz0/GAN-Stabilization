@@ -48,7 +48,7 @@ class SVDConv2d(Module):
         # TODO: set k to min(out,total_in) if not set
         # validation checks on k
         
-        r = min(in_channels, output_padding)
+        r = min(in_channels, out_channels)
         k = min(k, r)
         
         self.Uweight = Parameter(torch.Tensor(self.out_channels, k))
