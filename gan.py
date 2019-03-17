@@ -89,6 +89,20 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
 
+    def orth_reg(self):
+        reg = 0
+        for m in self.modules():
+            if isinstance(m, SVDConv2d):
+                reg += m.orth_reg()
+        return reg
+
+    def D_optimal_reg(self):
+        reg = 0
+        for m in self.modules():
+            if isinstance(m, SVDConv2d):
+                reg += m.spectral_reg()
+        return reg
+
     def forward(self, input):
         if input.is_cuda and self.ngpu > 1:
             output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))

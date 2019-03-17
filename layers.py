@@ -34,6 +34,8 @@ class SVDConv2d(Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
+        self.k = k
+        self.total_in_dim = in_channels*kernel_size[0]*kernel_size[1]
         self.weiSize = (self.out_channels,in_channels,kernel_size[0],kernel_size[1])
 
         self.stride = stride
@@ -47,33 +49,17 @@ class SVDConv2d(Module):
 
         # TODO: set k to min(out,total_in) if not set
         # validation checks on k
-        
-        r = min(in_channels, out_channels)
-        k = min(k, r)
-        
-        self.Uweight = Parameter(torch.Tensor(self.out_channels, k))
-        self.Dweight = Parameter(torch.Tensor(k))
-        self.Vweight = Parameter(torch.Tensor(k, self.in_channels))
+        self.k = min(self.out_channels, self.total_in_dim)//2 + 1
+        self.Uweight = Parameter(torch.Tensor(self.out_channels, self.k))#
+        self.Dweight = Parameter(torch.Tensor(self.k))#
+        self.Vweight = Parameter(torch.Tensor(self.k, self.total_in_dim))#
         self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
-        self.Vweight.data.normal_(0, math.sqrt(2. / self.out_channels))
+        self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
         self.Dweight.data.fill_(1)
-       # if self.out_channels  <= self.total_in_dim:
-       #     self.Uweight = Parameter(torch.Tensor(self.out_channels, k))#
-       #     self.Dweight = Parameter(torch.Tensor(k))#
-       #     self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))#
-       #     self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
-       #     self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
-       #     self.Dweight.data.fill_(1)
-       # else:
-       #     self.Uweight = Parameter(torch.Tensor(self.out_channels, k))#
-       #     self.Dweight = Parameter(torch.Tensor(k))#
-       #     self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))#
-       #     self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
-       #     self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
-       #     self.Dweight.data.fill_(1)
         self.projectiter = 0
+        print(self.Uweight.size(), self.Dweight.size(), self.Vweight.size())
         self.project(style='qr', interval = 1)
-
+        print(self.Uweight.size(), self.Dweight.size(), self.Vweight.size())
         if bias:
             self.bias = Parameter(torch.Tensor(self.out_channels))#
             self.bias.data.fill_(0)
@@ -87,7 +73,7 @@ class SVDConv2d(Module):
         self.Dweight.data = self.Dweight.data/self.Dweight.data.abs().max()
 
     def spectral_reg(self):
-        return -(torch.log(self.Dweight)).mean()
+        return -(torch.log(torch.prod(self.Dweight))).sum()
 
     @property
     def W_(self):
@@ -95,8 +81,7 @@ class SVDConv2d(Module):
         return self.Uweight.mm(self.Dweight.diag()).mm(self.Vweight).view(self.weiSize)*self.scale
 
     def forward(self, input):
-        _output = F.conv2d(input, self.W_, self.bias, self.stride,
-                        self.padding, self.dilation, self.groups)
+        _output = F.conv2d(input, self.W_, self.bias, self.stride, self.padding, self.dilation, self.groups)
         return _output
 
     def orth_reg(self):
@@ -108,14 +93,14 @@ class SVDConv2d(Module):
             W = self.Uweight.t()
         Wt = torch.t(W)
         WWt = W.mm(Wt)
-        I = Variable(torch.eye(WWt.size()[0]).cuda())
+        I = Variable(torch.eye(WWt.size()[0]))
         penalty = penalty+((WWt.sub(I))**2).sum()
 
 
         W = self.Vweight
         Wt = torch.t(W)
         WWt = W.mm(Wt)
-        I = Variable(torch.eye(WWt.size()[0]).cuda())
+        I = Variable(torch.eye(WWt.size()[0]))
         penalty = penalty+((WWt.sub(I))**2).sum()
         return penalty
 
@@ -126,8 +111,7 @@ class SVDConv2d(Module):
         self.projectiter = self.projectiter+1
         if style=='qr' and self.projectiter%interval == 0:
             # Compute the qr factorization for U
-            '''
-            if self.out_channels  <= self.total_in_dim:
+            if self.out_channels  <= self.k:
                 q, r = torch.qr(self.Uweight.data.t())
             else:
                 q, r = torch.qr(self.Uweight.data)
@@ -135,20 +119,11 @@ class SVDConv2d(Module):
             d = torch.diag(r, 0)
             ph = d.sign()
             q *= ph
-            if self.out_channels  <= self.total_in_dim:
+            if self.out_channels  <= self.k:
                 self.Uweight.data = q.t()
             else:
                 self.Uweight.data = q
-            '''    
-                
-            # Compute the qr factorization for V
-            q, r = torch.qr(self.Uweight.data)
-            # Make Q uniform according to https://arxiv.org/pdf/math-ph/0609050.pdf
-            d = torch.diag(r, 0)
-            ph = d.sign()
-            q *= ph
-            self.Uweight.data = q
-
+            
             # Compute the qr factorization for V
             q, r = torch.qr(self.Vweight.data.t())
             # Make Q uniform according to https://arxiv.org/pdf/math-ph/0609050.pdf
