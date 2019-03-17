@@ -34,7 +34,6 @@ class SVDConv2d(Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
-        self.total_in_dim = in_channels*kernel_size[0]*kernel_size[1]
         self.weiSize = (self.out_channels,in_channels,kernel_size[0],kernel_size[1])
 
         self.stride = stride
@@ -49,20 +48,29 @@ class SVDConv2d(Module):
         # TODO: set k to min(out,total_in) if not set
         # validation checks on k
         
-        if self.out_channels  <= self.total_in_dim:
-            self.Uweight = Parameter(torch.Tensor(self.out_channels, k))#
-            self.Dweight = Parameter(torch.Tensor(k))#
-            self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))#
-            self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
-            self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
-            self.Dweight.data.fill_(1)
-        else:
-            self.Uweight = Parameter(torch.Tensor(self.out_channels, k))#
-            self.Dweight = Parameter(torch.Tensor(k))#
-            self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))#
-            self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
-            self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
-            self.Dweight.data.fill_(1)
+        r = min(in_channels, output_padding)
+        k = min(k, r)
+        
+        self.Uweight = Parameter(torch.Tensor(self.out_channels, k))
+        self.Dweight = Parameter(torch.Tensor(k))
+        self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))
+        self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
+        self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
+        self.Dweight.data.fill_(1)
+       # if self.out_channels  <= self.total_in_dim:
+       #     self.Uweight = Parameter(torch.Tensor(self.out_channels, k))#
+       #     self.Dweight = Parameter(torch.Tensor(k))#
+       #     self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))#
+       #     self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
+       #     self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
+       #     self.Dweight.data.fill_(1)
+       # else:
+       #     self.Uweight = Parameter(torch.Tensor(self.out_channels, k))#
+       #     self.Dweight = Parameter(torch.Tensor(k))#
+       #     self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))#
+       #     self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
+       #     self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
+       #     self.Dweight.data.fill_(1)
         self.projectiter = 0
         self.project(style='qr', interval = 1)
 
