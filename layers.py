@@ -53,9 +53,9 @@ class SVDConv2d(Module):
         
         self.Uweight = Parameter(torch.Tensor(self.out_channels, k))
         self.Dweight = Parameter(torch.Tensor(k))
-        self.Vweight = Parameter(torch.Tensor(k, self.total_in_dim))
+        self.Vweight = Parameter(torch.Tensor(k, self.in_channels))
         self.Uweight.data.normal_(0, math.sqrt(2. / self.out_channels))
-        self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
+        self.Vweight.data.normal_(0, math.sqrt(2. / self.out_channels))
         self.Dweight.data.fill_(1)
        # if self.out_channels  <= self.total_in_dim:
        #     self.Uweight = Parameter(torch.Tensor(self.out_channels, k))#
