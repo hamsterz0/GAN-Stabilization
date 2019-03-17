@@ -20,6 +20,13 @@ def weights_init(m):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
+# Generator Params
+nz = 100  # Size of the latent z vector
+ngf = 64  # ??
+nc = 3    # Number of channels
+
+# Discriminator Params
+ndf = 64  # ??
 
 class Generator(nn.Module):
     def __init__(self, ngpu):
