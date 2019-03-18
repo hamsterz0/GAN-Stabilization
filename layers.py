@@ -93,14 +93,14 @@ class SVDConv2d(Module):
             W = self.Uweight.t()
         Wt = torch.t(W)
         WWt = W.mm(Wt)
-        I = Variable(torch.eye(WWt.size()[0]))
+        I = Variable(torch.eye(WWt.size()[0])).type(torch.cuda.FloatTensor)
         penalty = penalty+((WWt.sub(I))**2).sum()
 
 
         W = self.Vweight
         Wt = torch.t(W)
         WWt = W.mm(Wt)
-        I = Variable(torch.eye(WWt.size()[0]))
+        I = Variable(torch.eye(WWt.size()[0])).type(torch.cuda.FloatTensor)
         penalty = penalty+((WWt.sub(I))**2).sum()
         return penalty
 
