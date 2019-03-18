@@ -64,28 +64,28 @@ class Generator(nn.Module):
         return output
 
 class Discriminator(nn.Module):
-    def __init__(self, ngpu, nz, ndf, nc, k):
+    def __init__(self, ngpu, nz, ndf, nc, scale):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
-        self.k = k
+        self.scale = scale
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
-            SVDConv2d(nc, ndf, 4, self.k, 2, 1, bias=False),
+            SVDConv2d(nc, ndf, 4, self.scale, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
-            SVDConv2d(ndf, ndf * 2, 4,self.k,  2, 1, bias=False),
+            SVDConv2d(ndf, ndf * 2, 4,self.scale,  2, 1, bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
-            SVDConv2d(ndf * 2, ndf * 4, 4,self.k,  2, 1, bias=False),
+            SVDConv2d(ndf * 2, ndf * 4, 4,self.scale,  2, 1, bias=False),
             nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8
-            SVDConv2d(ndf * 4, ndf * 8, 4,self.k,  2, 1, bias=False),
+            SVDConv2d(ndf * 4, ndf * 8, 4,self.scale,  2, 1, bias=False),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
-            SVDConv2d(ndf * 8, 1, 4,self.k,  1, 0, bias=False),
+            SVDConv2d(ndf * 8, 1, 4,self.scale,  1, 0, bias=False),
             nn.Sigmoid()
         )
 

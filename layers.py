@@ -15,7 +15,7 @@ class SVDConv2d(Module):
     '''
     W = UdV
     '''
-    def __init__(self, in_channels, out_channels, kernel_size, k, stride=1,
+    def __init__(self, in_channels, out_channels, kernel_size, scale, stride=1,
                 padding=0, dilation=1, groups=1, bias=True, norm = False):
         self.eps = 1e-8
         self.norm = norm
@@ -34,7 +34,7 @@ class SVDConv2d(Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
-        self.k = k
+        self.scale = scale
         self.total_in_dim = in_channels*kernel_size[0]*kernel_size[1]
         self.weiSize = (self.out_channels,in_channels,kernel_size[0],kernel_size[1])
 
@@ -49,7 +49,7 @@ class SVDConv2d(Module):
 
         # TODO: set k to min(out,total_in) if not set
         # validation checks on k
-        self.k = min(self.out_channels, self.total_in_dim)//2 + 1
+        self.k = int(min(self.out_channels, self.total_in_dim)*self.scale) + 1
         self.Uweight = Parameter(torch.Tensor(self.out_channels, self.k))#
         self.Dweight = Parameter(torch.Tensor(self.k))#
         self.Vweight = Parameter(torch.Tensor(self.k, self.total_in_dim))#
@@ -57,9 +57,7 @@ class SVDConv2d(Module):
         self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
         self.Dweight.data.fill_(1)
         self.projectiter = 0
-        print(self.Uweight.size(), self.Dweight.size(), self.Vweight.size())
         self.project(style='qr', interval = 1)
-        print(self.Uweight.size(), self.Dweight.size(), self.Vweight.size())
         if bias:
             self.bias = Parameter(torch.Tensor(self.out_channels))#
             self.bias.data.fill_(0)
