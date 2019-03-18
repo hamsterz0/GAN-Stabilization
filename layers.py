@@ -94,6 +94,8 @@ class SVDConv2d(Module):
         Wt = torch.t(W)
         WWt = W.mm(Wt).type(torch.cuda.FloatTensor)
         I = Variable(torch.eye(WWt.size()[0])).type(torch.cuda.FloatTensor)
+        print(type(penalty))
+	print(type(WWt))
         penalty = penalty+((WWt.sub(I))**2).sum()
 
 
