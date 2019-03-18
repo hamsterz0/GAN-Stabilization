@@ -94,10 +94,7 @@ class SVDConv2d(Module):
         Wt = torch.t(W)
         WWt = W.mm(Wt)
         I = Variable(torch.eye(WWt.size()[0]).cuda())
-        print(penalty)
-	print(WWt)
         penalty = penalty+((WWt.sub(I))**2).sum()
-
 
         W = self.Vweight
         Wt = torch.t(W)
