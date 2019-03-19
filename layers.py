@@ -34,7 +34,7 @@ class SVDConv2d(Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
-        self.scale = scale
+        self.k_scale = scale
         self.total_in_dim = in_channels*kernel_size[0]*kernel_size[1]
         self.weiSize = (self.out_channels,in_channels,kernel_size[0],kernel_size[1])
 
@@ -49,7 +49,7 @@ class SVDConv2d(Module):
 
         # TODO: set k to min(out,total_in) if not set
         # validation checks on k
-        self.k = int(min(self.out_channels, self.total_in_dim)*self.scale)
+        self.k = int(min(self.out_channels, self.total_in_dim)*self.k_scale)
         if self.k == 0:
             self.k = 1
         self.Uweight = Parameter(torch.Tensor(self.out_channels, self.k))#
@@ -76,7 +76,7 @@ class SVDConv2d(Module):
         self.Dweight.data = self.Dweight.data/self.Dweight.data.abs().max()
 
     def spectral_reg(self):
-        return -(torch.log(torch.prod(self.Dweight))).sum()
+        return -(torch.log(torch.prod(self.Dweight)))
 
     @property
     def W_(self):
