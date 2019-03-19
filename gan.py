@@ -47,11 +47,11 @@ class Generator(nn.Module):
             nn.BatchNorm2d(ngf * 2),
             nn.ReLU(True),
             # state size. (ngf*2) x 16 x 16
-            nn.ConvTranspose2d(ngf * 2,     ngf, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.ReLU(True),
+            nn.ConvTranspose2d(ngf * 2,     nc, 4, 2, 1, bias=False),
+            #nn.BatchNorm2d(ngf),
+            #nn.ReLU(True),
             # state size. (ngf) x 32 x 32
-            nn.ConvTranspose2d(    ngf,      nc, 4, 2, 1, bias=False),
+            #nn.ConvTranspose2d(    ngf,      nc, 4, 2, 1, bias=False),
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
@@ -70,10 +70,10 @@ class Discriminator(nn.Module):
         self.scale = scale
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
-            SVDConv2d(nc, ndf, 4, self.scale, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
+            #SVDConv2d(nc, ndf, 4, self.scale, 2, 1, bias=False),
+            #nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
-            SVDConv2d(ndf, ndf * 2, 4,self.scale,  2, 1, bias=False),
+            SVDConv2d(nc, ndf * 2, 4,self.scale,  2, 1, bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
