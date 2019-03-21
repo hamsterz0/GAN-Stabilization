@@ -7,7 +7,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from layers import SVDConv2d
 import matplotlib.pyplot as plt
-
+import time
 
 training_loss = []
 testing_acc = []
@@ -19,6 +19,23 @@ class Net(nn.Module):
         self.conv1 = SVDConv2d(1, 20, 5, k)
         self.conv2 = SVDConv2d(20, 50, 5, k)
         self.conv3 = SVDConv2d(50, 10, 4, k)
+#        self.conv1 = nn.Conv2d(1, 20, 5, 1)
+#        self.conv2 = nn.Conv2d(20, 50, 5, 1)
+#        self.conv3 = nn.Conv2d(50, 10, 4, 1)
+
+    def orth_reg(self):
+        reg = 0
+        for m in self.modules():
+            if isinstance(m, SVDConv2d):
+                reg += m.orth_reg()
+        return reg
+
+    def D_optimal_reg(self):
+        reg = 0
+        for m in self.modules():
+            if isinstance(m, SVDConv2d):
+                reg += m.spectral_reg()
+        return reg
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -36,6 +53,8 @@ def train(args, model, device, train_loader, optimizer, epoch):
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
+        loss += 0.1*model.orth_reg()
+        loss += 10*model.D_optimal_reg()
         loss.backward()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
@@ -112,7 +131,9 @@ def main():
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     for epoch in range(1, args.epochs + 1):
+        curr = time.time()
         train(args, model, device, train_loader, optimizer, epoch)
+        print("Time it took for this epoch is: " + str(time.time() - curr))
         test(args, model, device, test_loader)
     
     filename = f'train-loss-{k}'
