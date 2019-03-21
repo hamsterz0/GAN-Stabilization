@@ -136,6 +136,9 @@ def main():
         print("Time it took for this epoch is: " + str(time.time() - curr))
         test(args, model, device, test_loader)
     
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print(pytorch_total_params)
+
     filename = f'train-loss-{k}'
     with open(filename, 'w') as fw:
         for train_loss in training_loss:
@@ -147,7 +150,7 @@ def main():
             fw.write('{}\n'.format(test_loss))
 
     if (args.save_model):
-        torch.save(model.state_dict(),"mnist_cnn.pt")
+        torch.save(model.state_dict(),f"mnist_cnn-{k}.pt")
         
 if __name__ == '__main__':
     main()
