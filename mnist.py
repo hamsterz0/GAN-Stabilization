@@ -6,14 +6,19 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from layers import SVDConv2d
+import matplotlib.pyplot as plt
 
+
+training_loss = []
+testing_acc = []
+k = 0.25
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = SVDConv2d(1, 20, 5, 0.75)
-        self.conv2 = SVDConv2d(20, 50, 5, 0.75)
-        self.conv3 = SVDConv2d(50, 10, 4, 0.75)
+        self.conv1 = SVDConv2d(1, 20, 5, k)
+        self.conv2 = SVDConv2d(20, 50, 5, k)
+        self.conv3 = SVDConv2d(50, 10, 4, k)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -37,6 +42,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
+            training_loss.append(loss.item())
 
 def test(args, model, device, test_loader):
     model.eval()
@@ -55,6 +61,7 @@ def test(args, model, device, test_loader):
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
+    testing_acc.append(correct)
 
 def main():
     # Training settings
@@ -107,6 +114,16 @@ def main():
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, optimizer, epoch)
         test(args, model, device, test_loader)
+    
+    filename = f'train-loss-{k}'
+    with open(filename, 'w') as fw:
+        for train_loss in training_loss:
+            fw.write('{}\n'.format(train_loss))
+
+    filename = f'test-loss-{k}'
+    with open(filename, 'w') as fw:
+        for test_loss in testing_acc:
+            fw.write('{}\n'.format(test_loss))
 
     if (args.save_model):
         torch.save(model.state_dict(),"mnist_cnn.pt")
