@@ -59,8 +59,6 @@ class SVDConv2d(Module):
         self.Vweight.data.normal_(0, math.sqrt(2. / self.total_in_dim))
         self.Dweight.data.fill_(1)
         self.projectiter = 0
-        print(self.k)
-        print(self.Uweight.size(),self.Dweight.size(),self.Vweight.size())
         self.project(style='qr', interval = 1)
         print(self.Uweight.size(),self.Dweight.size(),self.Vweight.size())
         if bias:

@@ -11,19 +11,17 @@ from layers import SVDConv2d
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 20, 5, 1)
-        self.conv2 = nn.Conv2d(20, 50, 5, 1)
-        self.fc1 = nn.Linear(4*4*50, 500)
-        self.fc2 = nn.Linear(500, 10)
+        self.conv1 = SVDConv2d(1, 20, 5, 0.75)
+        self.conv2 = SVDConv2d(20, 50, 5, 0.75)
+        self.conv3 = SVDConv2d(50, 10, 4, 0.75)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.max_pool2d(x, 2, 2)
         x = F.relu(self.conv2(x))
         x = F.max_pool2d(x, 2, 2)
-        x = x.view(-1, 4*4*50)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.conv3(x)
+        x = x.view(-1, 10)
         return F.log_softmax(x, dim=1)
     
 def train(args, model, device, train_loader, optimizer, epoch):
